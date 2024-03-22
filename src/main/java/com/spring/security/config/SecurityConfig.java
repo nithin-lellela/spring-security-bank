@@ -2,6 +2,7 @@ package com.spring.security.config;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
+import java.util.Arrays;
 import java.util.Collections;
 
 import org.springframework.context.annotation.Bean;
@@ -18,8 +19,9 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 
 import com.spring.security.filter.AuthoritiesLoggingAfterFilter;
-import com.spring.security.filter.AuthoritiesLoggingAtFilter;
 import com.spring.security.filter.CsrfCookieFilter;
+import com.spring.security.filter.JWTTokenGenerationFilter;
+import com.spring.security.filter.JWTTokenValidationFilter;
 import com.spring.security.filter.RequestValidationBeforeFilter;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,8 +35,12 @@ public class SecurityConfig {
 		CsrfTokenRequestAttributeHandler requestAttribute = new CsrfTokenRequestAttributeHandler();
 		requestAttribute.setCsrfRequestAttributeName("_csrf");
 		
-		http.securityContext().requireExplicitSave(false);
+		/* Disabling generation of JSESSIONID
+		 * http.securityContext().requireExplicitSave(false);
 		http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.ALWAYS));
+		*/
+		
+		http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 		
 		http.cors().configurationSource(new CorsConfigurationSource() {
 			
@@ -46,6 +52,7 @@ public class SecurityConfig {
 				config.setAllowedOrigins(Collections.singletonList("*"));
 				config.setAllowCredentials(true);
 				config.setAllowedHeaders(Collections.singletonList("*"));
+				config.setExposedHeaders(Arrays.asList("Authorization"));
 				config.setMaxAge(3600L);
 				return config;
 			}
@@ -55,7 +62,8 @@ public class SecurityConfig {
 		http.addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class);
 		http.addFilterBefore(new RequestValidationBeforeFilter(), BasicAuthenticationFilter.class);
 		http.addFilterAfter(new AuthoritiesLoggingAfterFilter(), BasicAuthenticationFilter.class);
-		//http.addFilterAt(new AuthoritiesLoggingAtFilter(), BasicAuthenticationFilter.class);
+		http.addFilterAfter(new JWTTokenGenerationFilter(), BasicAuthenticationFilter.class);
+		http.addFilterBefore(new JWTTokenValidationFilter(), BasicAuthenticationFilter.class);		//http.addFilterAt(new AuthoritiesLoggingAtFilter(), BasicAuthenticationFilter.class);
 		http.authorizeHttpRequests((requests) -> requests
 				/*.requestMatchers("/myAccount").hasAuthority("USER")
 				.requestMatchers("/myBalance").hasAnyAuthority("USER", "ADMIN")
