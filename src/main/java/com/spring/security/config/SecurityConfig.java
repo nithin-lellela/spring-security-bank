@@ -70,8 +70,8 @@ public class SecurityConfig {
 				.requestMatchers("/myLoan").hasAuthority("USER")*/
 				.requestMatchers("/myAccount").hasRole("USER")
 				.requestMatchers("/myBalance").hasAnyRole("USER", "ADMIN")
-				.requestMatchers("/myLoan").hasRole("MANAGER")
-				.requestMatchers("/user").authenticated()
+				//.requestMatchers("/myLoan").hasRole("MANAGER")
+				.requestMatchers("/user", "myLoan").authenticated()
 				.requestMatchers("/notices","/contact", "/register").permitAll()
 		);
 		http.formLogin(withDefaults());
